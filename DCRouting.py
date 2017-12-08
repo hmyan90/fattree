@@ -30,8 +30,9 @@ class Routing(object):
         @param topo Topo object from Net parent
         '''
         self.topo = topo
+        self.is_static = False
 
-    def get_route(self, src, dst, pkt):
+    def get_route(self, src, dst, _hash=None):
         '''Return flow path.
 
         @param src source host
@@ -209,7 +210,7 @@ class StructuredRouting(Routing):
         lg.info("complete paths = %s" % complete_paths)
         return complete_paths
 
-    def get_route(self, src, dst, hash_):
+    def get_route(self, src, dst, hash_=None):
         '''Return flow path.
 
         @param src source dpid (for host or switch)
@@ -316,7 +317,7 @@ class HashedRouting(StructuredRouting):
             return path
 
         super(HashedRouting, self).__init__(topo, choose_hashed)
-# pylint: enable-msg=W0613
+        self.is_static = False
 
 
 class DijkstraRouting(Routing):
@@ -325,49 +326,53 @@ class DijkstraRouting(Routing):
     def __init__(self, topo):
 
         super(DijkstraRouting, self).__init__(topo)
+        self.is_static = True
 
 
+    def get_neighbors(self, node):
 
-        self.nodes = {}
-        tmp_node = self.topo.g.nodes(data=True)
-        for name, keys in tmp_node:
-            self.nodes[name] = keys
-        self.edges = collections.defaultdict(set)
-        for src, dst in self.topo.links():
-            self.edges[self.nodes[src]['ip']].add(self.nodes[dst]['ip'])
-        
-        # print self.nodes
-        # print self.edges
+        return self.topo.up_nodes(node) + self.topo.down_nodes(node)
 
     def get_route(self, src, dst):
         ''' Return flow path. '''
 
-        paths = [src]
-        costs = [0]
-        q, seen = [(0, src)], set([src])
+        if src == dst:
+          return [src]
 
-        while q:
-            cost, cur_node = heapq.heappop(q)
+        print 'Begin get route %s, %s' %(src, dst)
+        heap = []
+        neighbors = self.get_neighbors(src)
+        for neighbor in neighbors:
+            heapq.heappush(heap, (1, [src, neighbor]))  # all node cost is 1
 
-            if cur_node not in seen:
-                seen.add(cur_node)
-                paths.append(cur_node)
-                costs.append(cost)
-                if cur_node == dst:
-                    return paths
+        visited = set()
+        visited.add(src)
 
-                for nei in self.topo.
+        while heap:
 
-                for nei in range(0, len(self.edges[cur_node])):
-                    if nei not in seen:
-                        heapq.heappush(q, (1, nei))
+            cost, path = heapq.heappop(heap)
+            cur_node = path[-1]
+            if cur_node in visited:
+                continue
 
-        raise
+            if cur_node == dst:
+                return path
+
+            neighbors = self.get_neighbors(cur_node)
+            for nei in neighbors:
+                if nei not in visited:
+                    heapq.heappush(heap, (cost+1, path + [nei])) # all node cost is 1
+
+            visited.add(cur_node)
+
+        print 'What happened here! Did not find a path'
 
 class TwoLevelRouting(Routing):
 
-    def __init__(self):
-        pass
+    def __init__(self, topo):
+
+        super(TwoLevelRouting, self).__init__(topo)
+        self.is_static = False
 
     def get_route(self, src, dst):
 

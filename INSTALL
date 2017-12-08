@@ -6,3 +6,5 @@ git clone git://github.com/noxrepo/pox
 cd pox
 git checkout 0a1bbb8
 
+apt-get install numpy
+apt-get install bwm-ng

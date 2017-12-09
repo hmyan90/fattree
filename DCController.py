@@ -156,7 +156,7 @@ class DCController(EventMixin):
         out_name = self.t.id_gen(dpid=out_dpid).name_str()
         hash_ = self._ecmp_hash(packet)
         route = self.r.get_route(in_name, out_name, hash_)
-        log.info("route: %s" % route)
+        # log.info("route: %s" % route)
         match = of.ofp_match.from_packet(packet)
         for i, node in enumerate(route):
             node_dpid = self.t.id_gen(name=node).dpid
@@ -177,7 +177,7 @@ class DCController(EventMixin):
         # Learn MAC address of the sender on every packet-in.
         self.macTable[packet.src] = (dpid, in_port)
 
-        log.info("mactable: %s" % self.macTable)
+        # log.info("mactable: %s" % self.macTable)
 
         # Insert flow, deliver packet directly to destination.
         if packet.dst in self.macTable:
@@ -219,7 +219,7 @@ class DCController(EventMixin):
         dst_sw_name = dst_sw[0]
         # hash_ = self._src_dst_hash(src, dst)
         route = self.r.get_route(src_sw_name, dst_sw_name)
-        log.info("route: %s" % route)
+        # log.info("route: %s" % route)
 
         # Form OF match
         match = of.ofp_match()

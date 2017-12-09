@@ -33,7 +33,7 @@ QUEUE_SIZE = 100
 # Link capacity (Mbps)
 BW = 10 
 
-parser = ArgumentParser(description="minient_fattree")
+parser = ArgumentParser(description="mininet_fattree")
 
 parser.add_argument('-d', '--dir', dest='output_dir', default='log',
         help='Output directory')
@@ -68,13 +68,13 @@ def FatTreeNet(args, k=4, bw=10, cpu=-1, queue=100, controller='DCController'):
     ''' Create a Fat-Tree network '''
 
     if args.ECMP:
-        pox_c = Popen("~/pox/pox.py %s --topo=ft,4 --routing=ECMP", shell=True)
+        pox_c = Popen("~/pox/pox.py %s --topo=ft,4 --routing=ECMP > log/pox.log" %controller, shell=True)
     elif args.dij:
-        pox_c = Popen("~/pox/pox.py %s --topo=ft,4 --routing=dij"%controller, shell=True)
+        pox_c = Popen("~/pox/pox.py %s --topo=ft,4 --routing=dij" %controller, shell=True)
     else:
         info('**error** the routing scheme should be ecmp or dijkstra\n')
 
-
+    sleep(2)
     info('*** Creating the topology\n')
     topo = FatTreeTopo(k)
 
@@ -86,14 +86,130 @@ def FatTreeNet(args, k=4, bw=10, cpu=-1, queue=100, controller='DCController'):
 
     return net
 
+"""
+def start_tcpprobe():
+    ''' Install tcp_probe module and dump to file '''
+    os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
+    Popen("cat /proc/net/tcpprobe > %s/tcp.txt" %args.output_dir ,shell=True)
 
+
+def stop_tcpprobe():
+    os.system("killall -9 cat")
+"""
+
+def _gen_routing_mode_str(args):
+
+    if args.ECMP:
+        return "ECMP"
+    elif args.dij:
+        return "dij"
+    else:
+        return 'two_level'
+
+def wait_listening(client, server, port):
+  "Wait until server is listening on port"
+  if not 'telnet' in client.cmd('which telnet'):
+    raise Exception('Could not find telnet')
+  cmd = ('sh -c "echo A | telnet -e A %s %s"' %
+         (server.IP(), port))
+  while 'Connected' not in client.cmd(cmd):
+    print('waiting for', server,
+           'to listen on port', port, '\n')
+    sleep(.5)
 
 def iperfTrafficGen(args, hosts, net):
-    ''' 
-    Generate traffic pattern using iperf and monitor all of the interface
+    ''' Generate traffic pattern using iperf and monitor all of thr interfaces
+
+    input format:
+    src_ip dst_ip dst_port type seed start_time stop_time flow_size r/e
+    repetitions time_between_flows r/e (rpc_delay r/e)
+
     '''
-    pass
-    
+
+    host_list = {}
+    for h in hosts:
+        host_list[h.IP()] = h
+
+    port = 5001
+    data = open(args.input_file)
+    datas = []
+    for line in data:
+        flow = line.split(' ')
+        if flow[0] not in host_list or flow[1] not in host_list:
+            print '%s, %s not in host list' %(flow[0], flow[1])
+            continue
+        datas.append([flow[0], flow[1]])
+
+    start_tcpprobe()
+
+    info('*** Starting iperf ...\n')
+
+    dst_ips = set()
+    for data in datas:
+        dst_ips.add(data[1])
+
+    for dst_ip in dst_ips:
+
+        dst = host_list[dst_ip]
+        aa = 'mnexec -a %s iperf -s -p %s > /dev/null &' % (dst.pid, port)
+        Popen(aa, shell=True)
+
+    monitor = multiprocessing.Process(target=monitor_devs_ng, args=
+    ('%s/%s_rate.txt' % (args.output_dir, _gen_routing_mode_str(args)), 0.01))
+
+    monitor.start()
+
+    # Start the senders
+    for data in datas:
+        src = host_list[data[0]]
+        dst = host_list[data[1]]
+        aa='mnexec -a %s iperf -c %s -p %s -t %d -i 1 -yc > /dev/null &' % (src.pid, dst.IP(), port, args.time)
+        Popen(aa, shell=True)
+
+    # for line in data:
+    #     flow = line.split(' ')
+    #     src_ip = flow[0]
+    #     dst_ip = flow[1]
+    #     print src_ip, dst_ip
+    #     if src_ip not in host_list:
+    #         continue
+    #     sleep(0.2)
+    #     server = host_list[dst_ip]
+        # iperf_s = 'iperf -s -p %s > %s/server.txt' % (port, args.output_dir)
+        # iperf_s = 'iperf -s -p %d' % (port)
+        # print iperf_s
+        # cmd_s = 'mnexec -a %s %s' %(server.pid, iperf_s)
+        # server.popen(iperf_s, shell=True)
+        # print cmd_s
+        # Popen(cmd_s, shell=True)
+        # server.popen('iperf -s -p %s > log/server.txt' % port, shell=True)
+        # server.popen('ifconfig > log/server.txt')
+        # server.popen('iperf -s -p %s > ~/hedera/server.txt' % port, shell=True)
+        # server.cmd('iperf -s -p %d' % port)
+
+        # client = host_list[src_ip]
+
+        # iperf_c = 'iperf -c %s -p %s -t %d > %s/client.txt' % (server.IP(), port, args.time, args.output_dir)
+        # iperf_c = 'iperf -c %s -p %d -t %d' % (server.IP(), port, args.time)
+        # print iperf_c
+        # client.popen(iperf_c, shell=True)
+        # cmd_c = 'mnexec -a %s %s' % (client.pid, iperf_c)
+        # print cmd_c
+        # Popen(cmd_c, shell=True)
+        # client.popen('iperf -c %s -p %s -t %d > log/client.txt'
+        #              % (server.IP(), port, args.time), shell=True)
+        # client.popen('iperf -c %s -p %s -t %d > ~/hedera/client.txt'
+        #              % (server.IP(), port, args.time), shell=True)
+        # client.cmd('iperf -c %s -p %s -t %d' % (server.IP(), port, args.time))
+
+    sleep(args.time)
+
+    monitor.terminate()
+
+    info('*** stoping iperf ...\n')
+    stop_tcpprobe()
+
+    Popen("killall -9 iperf", shell=True).wait()
 
 
 def FatTreeTest(args,controller):
@@ -109,8 +225,9 @@ def FatTreeTest(args,controller):
 
     # wait for the switches to connect to the controller
     info('** Waiting for switches to connect to the controller\n')
-    sleep(500)
+    sleep(5)
 
+    info('** Start iperf test\n**')
     hosts = net.hosts
     
     iperfTrafficGen(args, hosts, net)
@@ -141,9 +258,9 @@ if __name__ == '__main__':
     clean()
 
     if args.ECMP:
-        FatTreeTest(args,controller='fattree.DCController')
+        FatTreeTest(args,controller='DCController')
     elif args.dij:
-        FatTreeTest(args,controller='fattree.DCController')
+        FatTreeTest(args,controller='DCController')
     elif args.tlr:
         #flow tables in two-level routing are installed proactively, so no need of controller
         FatTreeTest(args,controller= None) 

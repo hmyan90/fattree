@@ -17,3 +17,4 @@ def buildTopo(topo):
 
 def getRouting(routing, topo):
     return ROUTING[routing](topo)
+

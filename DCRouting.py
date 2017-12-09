@@ -339,7 +339,6 @@ class DijkstraRouting(Routing):
         if src == dst:
           return [src]
 
-        print 'Begin get route %s, %s' %(src, dst)
         heap = []
         neighbors = self.get_neighbors(src)
         for neighbor in neighbors:

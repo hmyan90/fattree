@@ -8,3 +8,4 @@ git checkout 0a1bbb8
 
 apt-get install numpy
 apt-get install bwm-ng
+apt-get install python-matplotlib

@@ -86,7 +86,7 @@ def FatTreeNet(args, k=4, bw=10, cpu=-1, queue=100, controller='DCController'):
 
     return net
 
-"""
+
 def start_tcpprobe():
     ''' Install tcp_probe module and dump to file '''
     os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
@@ -95,7 +95,7 @@ def start_tcpprobe():
 
 def stop_tcpprobe():
     os.system("killall -9 cat")
-"""
+
 
 def _gen_routing_mode_str(args):
 

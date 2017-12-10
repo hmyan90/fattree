@@ -142,7 +142,7 @@ class StructuredTopo(Topo):
             return self.layer(n) == layer
 
         nodes = [n for n in self.g.nodes() if is_layer(n)]
-        return
+        return nodes
 
 
     def up_nodes(self, name):

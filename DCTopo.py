@@ -142,7 +142,8 @@ class StructuredTopo(Topo):
             return self.layer(n) == layer
 
         nodes = [n for n in self.g.nodes() if is_layer(n)]
-        return nodes
+        return
+
 
     def up_nodes(self, name):
         '''Return edges one layer higher (closer to core).
@@ -164,6 +165,15 @@ class StructuredTopo(Topo):
         layer = self.layer(name) + 1
         nodes = [n for n in self.g[name] if self.layer(n) == layer]
         return nodes
+
+    def down_nodes_exclude_host(self, name):
+
+        layer = self.layer(name) + 1
+        if layer == FatTreeTopo.LAYER_HOST:
+            return []
+        else:
+            nodes = [n for n in self.g[name] if self.layer(n) == layer]
+            return nodes
 
     def up_edges(self, name):
         '''Return edges one layer higher (closer to core).

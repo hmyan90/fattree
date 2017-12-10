@@ -328,10 +328,9 @@ class DijkstraRouting(Routing):
         super(DijkstraRouting, self).__init__(topo)
         self.is_static = True
 
-
     def get_neighbors(self, node):
 
-        return self.topo.up_nodes(node) + self.topo.down_nodes(node)
+        return self.topo.up_nodes(node) + self.topo.down_nodes_exclude_host(node)
 
     def get_route(self, src, dst):
         ''' Return flow path. '''

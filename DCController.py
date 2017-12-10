@@ -205,6 +205,16 @@ class DCController(EventMixin):
         "Return a hash based on src and dst dpids."
         return crc32(pack('QQ', src_dpid, dst_dpid))
 
+    # def _install_two_level_proactive(self):
+    #
+    #     match =
+    #
+    #
+    #     swId = 1
+    #     self.switches[swId].install(3, match)
+
+
+
     def _install_proactive_path(self, src, dst):
         """Install entries on route between two hosts based on MAC addrs.
 

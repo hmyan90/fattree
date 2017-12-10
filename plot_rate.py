@@ -66,18 +66,17 @@ def plot_results(args):
 
     bb = {'dij' : [],'two_level' :  [], 'ecmp' : []}
 
-    sw = '[0-3]h[0-1]h1'
+    sw = '[0-3]_[0-1]_1'
     for t in traffics:
         print "Dijkstra: ", t
-        input_file = '%s/fattree-dij/%s/dij_rate.txt' %(args.files, t)
+        input_file = '%s/fattree-dij/%s/rate.txt' %(args.files, t)
         vals = get_bisection_bw(input_file, sw)
-        bb['dij'].append(vals/fbb)
+        bb['dij'].append(vals/fbb/2)
 
-    sw = '[0-3]h[0-1]h1'
     for t in traffics:
         print "ECMP: ", t
         # input_file = args.files + '/fattree-ecmp/%s/rate.txt' % t
-        input_file = '%s/fattree-ecmp/%s/dij_rate.txt' % (args.files, t)
+        input_file = '%s/fattree-ecmp/%s/rate.txt' % (args.files, t)
         vals = get_bisection_bw(input_file, sw)
         bb['ecmp'].append(vals/fbb/2)
 

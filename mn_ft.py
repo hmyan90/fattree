@@ -63,7 +63,6 @@ parser.add_argument('--dijkstra',dest='dij',default=False,
 args = parser.parse_args()
 
 
-
 def FatTreeNet(args, k=4, bw=10, cpu=-1, queue=100, controller='DCController'):
     ''' Create a Fat-Tree network '''
 
@@ -74,7 +73,7 @@ def FatTreeNet(args, k=4, bw=10, cpu=-1, queue=100, controller='DCController'):
     else:
         info('**error** the routing scheme should be ecmp or dijkstra\n')
 
-    sleep(2)
+    sleep(3)
     info('*** Creating the topology\n')
     topo = FatTreeTopo(k)
 
@@ -154,8 +153,7 @@ def iperfTrafficGen(args, hosts, net):
         aa = 'mnexec -a %s iperf -s -p %s > /dev/null &' % (dst.pid, port)
         Popen(aa, shell=True)
 
-    monitor = multiprocessing.Process(target=monitor_devs_ng, args=
-    ('%s/%s_rate.txt' % (args.output_dir, _gen_routing_mode_str(args)), 0.01))
+    monitor = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
 
     monitor.start()
 
@@ -262,7 +260,6 @@ if __name__ == '__main__':
     elif args.dij:
         FatTreeTest(args,controller='DCController')
     elif args.tlr:
-        #flow tables in two-level routing are installed proactively, so no need of controller
         FatTreeTest(args,controller= None) 
     else:
         info('******error**** please specify either ecmp, dijkstra or tlr\n')

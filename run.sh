@@ -13,7 +13,19 @@ done
 
 
 # dijkstra
- 
+for f in $INPUT_FILES;
+do
+        input_file=$INPUT_DIR/$f
+        pref="fattree-dij"
+        out_dir=$OUTPUT_DIR/$pref/$f
+        sudo python mn_ft.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --dij --iperf
+done
+
+
 # two-level routing
 
 
+# draw the bandwidth plot
+INPUT=results
+OUTPUT=rate
+python plot_rate.py --input $INPUT --out $OUTPUT

@@ -31,7 +31,7 @@ def get_bisection_bw(input_file, pat_iface):
     data = read_list(input_file)
 
     rate = {} 
-    column = 2
+    column = 3
         
     for row in data:
         try:
@@ -49,8 +49,9 @@ def get_bisection_bw(input_file, pat_iface):
                 break
     vals = []
     for k in rate.keys():
-        if pat_iface.match(k): 
+        if pat_iface.match(k):
             avg_rate = avg(rate[k][10:-300])
+            print k, avg_rate
             vals.append(avg_rate)
             
     return fsum(vals)
@@ -66,19 +67,19 @@ def plot_results(args):
 
     bb = {'dij' : [],'two_level' :  [], 'ecmp' : []}
 
-    sw = '[0-3]_[0-1]_1-eth'
+    sw = '[0-3]_[0-1]_1-eth[1,3]'
     for t in traffics:
         print "Dijkstra: ", t
         input_file = '%s/fattree-dij/%s/rate.txt' %(args.files, t)
         vals = get_bisection_bw(input_file, sw)
-        bb['dij'].append(vals/fbb/2)
+        bb['dij'].append(vals/fbb)
 
     for t in traffics:
         print "ECMP: ", t
         # input_file = args.files + '/fattree-ecmp/%s/rate.txt' % t
         input_file = '%s/fattree-ecmp/%s/rate.txt' % (args.files, t)
         vals = get_bisection_bw(input_file, sw)
-        bb['ecmp'].append(vals/fbb/2)
+        bb['ecmp'].append(vals/fbb)
 
     # sw = '[0-3]h[0-1]h1'
     # for t in traffics:
@@ -112,17 +113,17 @@ def plot_results(args):
         plt.ylabel('Normalized Average Bisection Bandwidth')
         plt.xticks(ind + 2.5*width, labels[i*n_t:(i+1)*n_t])
     
-        # FatTree + two-level
+        # FatTree + ECMP
         p1 = plt.bar(ind + 3.5*width, bb['ecmp'][i*n_t:(i+1)*n_t], width=width, color='royalblue')
         #
         # FatTree + Dij
         p2 = plt.bar(ind + 2.5*width, bb['dij'][i*n_t:(i+1)*n_t], width=width, color='green')
 
-        # FatTree + ECMP
-        p3 = plt.bar(ind + 1.5*width, bb['ecmp'][i*n_t:(i+1)*n_t], width=width, color='brown')
+        # FatTree + Two-level
+        #p3 = plt.bar(ind + 1.5*width, bb['ecmp'][i*n_t:(i+1)*n_t], width=width, color='brown')
 
-        plt.legend([p1[0], p2[0], p3[0]],['ECMP', 'Dij','ECMP'],loc='upper left')
-
+        #plt.legend([p1[0], p2[0], p3[0]],['ECMP', 'Dij','ECMP'],loc='upper left')
+        plt.legend([p1[0], p2[0]], ['ECMP', 'Dijkstra'], loc='upper left')
         plt.savefig(args.out)
 
 

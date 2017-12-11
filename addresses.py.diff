@@ -1,0 +1,58 @@
+--- addresses_bak1.py	2017-12-11 03:19:59.496347791 -0800
++++ addresses.py	2017-12-11 03:21:06.210820914 -0800
+@@ -79,6 +79,7 @@
+     Understands Ethernet address is various forms.  Hex strings, raw byte
+     strings, etc.
+     """
++    """
+     # Always stores as a 6 character string
+     if isinstance(addr, bytes) or isinstance(addr, basestring):
+       if len(addr) == 6:
+@@ -115,6 +116,47 @@
+     else:
+       raise RuntimeError("Expected ethernet address to be a string of 6 raw "
+                          "bytes or some hex")
++    """
++    if isinstance(addr, int) or isinstance(addr, long):
++      addr = long(addr)
++      # Store the long as an array of 6 bytes
++      # Struct puts the least significant byte at [0] though!
++      # And Murphy puts the least significant byte at [-1]
++      # So we pack ourselves one byte at a time
++      val = []
++      for _ in range(6):
++        # This may not be machine-independent...
++        val.insert(0, struct.pack("B", (addr & 0xFF)))
++        addr >>= 8
++      self._value = ''.join(val)
++    elif isinstance(addr, bytes) or isinstance(addr, unicode):
++      if len(addr) == 17 or len(addr) == 12 or addr.count(':') == 5:
++        # hex
++        if len(addr) == 17:
++          if addr[2::3] != ':::::' and addr[2::3] != '-----':
++            raise RuntimeError("Bad format for ethernet address")
++          # TODOC: I have no clue what this is doing
++          addr = ''.join((addr[x*3:x*3+2] for x in xrange(0,6)))
++        elif len(addr) == 12:
++          pass
++        else:
++          addr = ''.join(["%02x" % (int(x,16),) for x in addr.split(":")])
++        # TODOC: I have no clue what this is doing
++        addr = b''.join((chr(int(addr[x*2:x*2+2], 16)) for x in range(0,6)))
++      elif len(addr) == 6:
++        # raw
++        pass
++      else:
++        raise RuntimeError("Expected ethernet address string to be 6 raw bytes or some hex")
++      self._value = addr
++    elif isinstance(addr, EthAddr):
++      self._value = addr.toRaw()
++    elif type(addr) == list or (hasattr(addr, '__len__') and len(addr) == 6 and hasattr(addr, '__iter__')):
++      self._value = b''.join( (chr(x) for x in addr) )
++    elif addr is None:
++      self._value = b'\x00' * 6
++    else:
++      raise RuntimeError("Expected ethernet address to be a string of 6 raw bytes or some hex")
+ 
+   def isBridgeFiltered (self):
+     """

@@ -183,7 +183,6 @@ class DCController(EventMixin):
             else:
                 out_port = final_out_port
             self.switches[node_dpid].install(out_port, match, idle_timeout = IDLE_TIMEOUT)
-        self._install_two_level_proactive(event)
 
     def _handle_packet_reactive(self, event):
         packet = event.parsed

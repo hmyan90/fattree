@@ -10,7 +10,7 @@ from struct import pack
 from zlib import crc32
 
 from pox.core import core
-import pox.openflow.libopenflow_01 as of
+# import pox.openflow.libopenflow_01 as of
 
 from pox.lib.revent import EventMixin
 from pox.lib.util import dpidToStr
@@ -22,6 +22,7 @@ import pox.openflow.libopenflow_01 as of
 from pox.lib.addresses import EthAddr
 
 from util import buildTopo, getRouting
+import pox.openflow.nicira as nx
 
 
 log = core.getLogger()
@@ -65,6 +66,22 @@ class Switch(EventMixin):
         msg.actions.append(of.ofp_action_output(port = port))
         #msg.buffer_id = buf          
         msg.flags = of.OFPFF_SEND_FLOW_REM
+
+        self.connection.send(msg)
+
+    def install_nx_flow(self, port, match, modify = False, buf = -1, idle_timeout = 0, hard_timeout = 0):
+        msg = nx.nx_flow_mod()
+        msg.match = match
+        if modify:
+            msg.command = of.OFPFC_MODIFY_STRICT
+        else:
+            msg.command = of.OFPFC_ADD
+        msg.idle_timeout = idle_timeout
+        msg.hard_timeout = hard_timeout
+        msg.actions.append(of.ofp_action_output(port = port))
+        # msg.actions.append()
+        #msg.buffer_id = buf
+        # msg.flags = of.OFPFF_SEND_FLOW_REM
 
         self.connection.send(msg)
 
@@ -166,6 +183,7 @@ class DCController(EventMixin):
             else:
                 out_port = final_out_port
             self.switches[node_dpid].install(out_port, match, idle_timeout = IDLE_TIMEOUT)
+        self._install_two_level_proactive(event)
 
     def _handle_packet_reactive(self, event):
         packet = event.parsed
@@ -205,13 +223,33 @@ class DCController(EventMixin):
         "Return a hash based on src and dst dpids."
         return crc32(pack('QQ', src_dpid, dst_dpid))
 
-    # def _install_two_level_proactive(self):
-    #
-    #     match =
-    #
-    #
-    #     swId = 1
-    #     self.switches[swId].install(3, match)
+    def _install_two_level_proactive(self):
+
+        print 'Begin insert mask routes'
+
+        # match = of.ofp_match()
+        # match.nw_dst = (IPAddr("10.0.0.0"), 24)
+        # self.switches[1].send_packet_data(0, match)
+        #
+        # match.nw_dst = (IPAddr("10.0.1.0"), 24)
+        # self.switches[1].send_packet_data(0, match)
+        #
+        # for i in range(0, 4):
+        #     for j in range(0, 2):
+        #         match.nw_dst = (IPAddr("10.%d.%d.2" %(i, j)), 32)
+        #         match.nw_dst = (IPAddr("10.%d.%d.3" %(i, j)), 32)
+        #
+        # self.switches[2].send_packet_data()
+        # match.nw_dst =
+
+        match = nx.nx_match()
+        match.of_ip_dst = '10.1.0.0/255.255.255.0'
+        # # msg.actions.append(nx.nx_action_resubmit.resubmit_table(table=1))
+        # event.connection.send(msg)
+
+        self.switches[1].install_nx_flow(1, match)
+        print 'Complete insert a mask route'
+        return
 
 
 
@@ -254,6 +292,8 @@ class DCController(EventMixin):
 
         if self.r.is_static:
             # Install L2 src/dst flow for every possible pair of hosts.
+
+            # return self._install_two_level_proactive()
             for src in sorted(self._raw_dpids(self.t.layer_nodes(self.t.LAYER_HOST))):
                 for dst in sorted(self._raw_dpids(self.t.layer_nodes(self.t.LAYER_HOST))):
                     self._install_proactive_path(src, dst)

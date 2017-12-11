@@ -50,7 +50,7 @@ def get_bisection_bw(input_file, pat_iface):
     vals = []
     for k in rate.keys():
         if pat_iface.match(k): 
-            avg_rate = avg(rate[k][10:-10])
+            avg_rate = avg(rate[k][10:-300])
             vals.append(avg_rate)
             
     return fsum(vals)
@@ -66,7 +66,7 @@ def plot_results(args):
 
     bb = {'dij' : [],'two_level' :  [], 'ecmp' : []}
 
-    sw = '[0-3]_[0-1]_1'
+    sw = '[0-3]_[0-1]_1-eth'
     for t in traffics:
         print "Dijkstra: ", t
         input_file = '%s/fattree-dij/%s/rate.txt' %(args.files, t)
@@ -121,7 +121,7 @@ def plot_results(args):
         # FatTree + ECMP
         p3 = plt.bar(ind + 1.5*width, bb['ecmp'][i*n_t:(i+1)*n_t], width=width, color='brown')
 
-        plt.legend([p1[0], p2[0], p3[0]],['Dij', 'ECMP','ECMP'],loc='upper left')
+        plt.legend([p1[0], p2[0], p3[0]],['ECMP', 'Dij','ECMP'],loc='upper left')
 
         plt.savefig(args.out)
 

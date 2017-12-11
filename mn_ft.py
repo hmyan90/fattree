@@ -67,9 +67,9 @@ def FatTreeNet(args, k=4, bw=10, cpu=-1, queue=100, controller='DCController'):
     ''' Create a Fat-Tree network '''
 
     if args.ECMP:
-        pox_c = Popen("~/pox/pox.py %s --topo=ft,4 --routing=ECMP > log/pox.log" %controller, shell=True)
+        pox_c = Popen("/home/mininet/pox/pox.py %s --topo=ft,4 --routing=ECMP > log/pox.log" %controller, shell=True)
     elif args.dij:
-        pox_c = Popen("~/pox/pox.py %s --topo=ft,4 --routing=dij" %controller, shell=True)
+        pox_c = Popen("/home/mininet/pox/pox.py %s --topo=ft,4 --routing=dij" %controller, shell=True)
     else:
         info('**error** the routing scheme should be ecmp or dijkstra\n')
 
